@@ -1,0 +1,136 @@
+{% extends "dashboard_base.html" %}
+{% block title %}ЭУМО - Редактирование{% endblock %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+<div id="notification-area" style="position: fixed; top: 80px; right: 20px; z-index: 1100; width: 350px;"></div>
+  <div class="card mb-3">
+    <div class="col-md-12 d-flex gap-3 align-items-center justife-content-center" style="padding: 20px">
+      <div class="row ">
+        <a class="ml-2" href="{% url 'editor' %}">
+          <button type="button" class="btn btn-inverse-primary btn-rounded btn-icon">
+            <i class="ti-angle-left"></i>
+          </button>
+        </a>
+        <div class="ml-3 d-flex flex-column">
+          <h4 class="mb-2">Редактирование темы</h4>
+          <h6 class="card-description mb-0">Напишите новое название, описание или добавьте изображение, нажмите
+            сохранить, либо продолжить для редактирования содержимого.</h6>
+        </div>
+      </div>
+      <div class="dropdown ml-auto">
+        <button type="button" class="btn btn-dark dropdown-toggle" id="dropdownMenuIconButton7" data-toggle="dropdown"
+          aria-haspopup="true" aria-expanded="false">
+          <i class="ti-settings"></i>
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuIconButton7">
+          <a class="dropdown-item" href="#" id="saveButton">Сохранить</a>
+          <a class="dropdown-item" href="#" id="deleteButton">Удалить</a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="{{ post.get_absolute_url }}">Просмотреть</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-12 grid-margin stretch-card">
+      <div class="card">
+        <div class="card-body">
+          <form form class="forms-sample" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+              <div class="form-group">
+              <label for="exampleInputName1">Название темы</label>
+                <input type="text" name="title" style="width: 100%" class="form-control" id="exampleInputName1" placeholder="Название"
+                value="{{ post.title }}" required>
+            </div>
+            <div class="form-group">
+              <label for="exampleInputName1">Номер темы</label>
+              <input type="number" name="number" class="form-control" placeholder="Название" value="{{ post.number }}"
+                required>
+            </div>
+            <div class="form-group">
+              <label>Изображение (превью)</label>
+              <input type="file" name="image" class="file-upload-default" id="imageInput">
+
+              <div class="input-group col-xs-12">
+                <input type="text" class="form-control file-upload-info" disabled placeholder="Загрузите изображение"
+                  id="filePathDisplay">
+                <span class="input-group-append">
+                  <button class="file-upload-browse btn btn-primary" type="button" id="uploadBtn">Загрузить</button>
+                </span>
+              </div>
+
+              <div class="mt-2">
+                <img id="previewImage" src="{% if post.image %}{{ post.image.url }}{% endif %}"
+                  style="width: 150px; object-fit: contain;">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="exampleTextarea1">Краткое описание</label>
+              <textarea class="form-control" name="description" id="exampleTextarea1"
+                rows="4">{{ post.description }}</textarea>
+            </div>
+            <div class="form-group">
+              <label>Компетенции</label>
+              <select name="competencies" class="form-control js-example-basic-multiple" multiple="multiple" style="width: 100%;">
+                {% for comp in all_competencies %}
+                  <option value="{{ comp.id }}"
+                    {% if comp.id in selected_competencies %}selected{% endif %}>
+                    {{ comp.code }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary mr-2">Продолжить</button>
+            <button type="button" class="btn btn-outline-danger btn-fw" data-toggle="modal" data-target="#deleteModal">
+                Удалить тему
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Модальное окно подтверждения удаления -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteModalLabel">Подтверждение удаления</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Закрыть">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Вы уверены, что хотите удалить тему "{{ post.title }}"?
+      </div>
+      <div class="modal-footer">
+        <!-- Кнопка отмены -->
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+        <!-- Кнопка для отправки запроса на удаление -->
+        <form method="POST">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger" name="delete">Удалить</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'js/file-upload.js' %}"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Инициализация Select2
+    $('.js-example-basic-multiple').select2({
+        placeholder: "Выберите компетенции",
+        allowClear: true,
+        tags: false,
+        tokenSeparators: [',', ' ']
+    });
+});
+</script>
+{% endblock %}

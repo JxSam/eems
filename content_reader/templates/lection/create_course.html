@@ -1,0 +1,182 @@
+{% extends "dashboard_base.html" %}
+{% block title %}ЭУМО - Создание тестов{% endblock %}
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/trix/1.3.1/trix.css">
+<style>
+trix-editor {
+  border: none;
+  box-shadow: none;
+  position: relative;
+}
+
+trix-toolbar {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  position: sticky;
+  top: 10px; /* немного отступа для красоты */
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 1000; /* чтобы была поверх */
+}
+
+trix-toolbar.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+trix-toolbar .trix-button-group {
+  background: none;
+  border: none;
+}
+
+trix-toolbar .trix-button {
+  background: none;
+  border: none;
+  padding: 5px;
+  color: #555;
+}
+
+trix-toolbar .trix-button:hover {
+  background: none;
+  color: #000;
+}
+</style>
+{% endblock %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <div class="row">
+    <div class="col-md-12 grid-margin">
+      <div class="row">
+        <a href="{% url 'editor' %}">
+          <button type="button" class="btn btn-inverse-primary btn-rounded btn-icon">
+            <i class="ti-angle-left"></i>
+          </button>
+        </a>
+        <div class="col-12 col-xl-8 mb-4 mb-xl-0">
+          <h3 class="font-weight-bold">Создание новой темы</h3>
+          <h6 class="font-weight-normal mb-0">Для создания новой темы добавьте название, краткое описание, изображение.
+          </h6>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="" id="blocks-container">
+    <!-- Блоки будут добавляться сюда -->
+  </div>
+  <div class="d-flex justify-content-center">
+    <div class="btn-group">
+      <button type="button" class="btn btn-primary btn-lg dropdown-toggle" data-toggle="dropdown">
+        <i class="ti-plus"></i> Добавить
+      </button>
+      <div class="dropdown-menu">
+        <a class="dropdown-item" href="#" onclick="addTextBlock()">Текст</a>
+        <a class="dropdown-item" href="#" onclick="addTestBlock()">Тест</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'js/file-upload.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/trix/1.3.1/trix.js"></script>
+<script>
+document.addEventListener('focusin', function(event) {
+  if (event.target.tagName === "TRIX-EDITOR") {
+    const toolbarId = event.target.getAttribute("toolbar");
+    const toolbar = document.getElementById(toolbarId);
+    toolbar.classList.add("active");
+  }
+});
+
+document.addEventListener('focusout', function(event) {
+  if (event.target.tagName === "TRIX-EDITOR") {
+    const toolbarId = event.target.getAttribute("toolbar");
+    const toolbar = document.getElementById(toolbarId);
+    toolbar.classList.remove("active");
+  }
+});
+
+</script>
+<script>
+let textBlockCounter = 0;
+
+function addTextBlock() {
+  textBlockCounter++;
+  const container = document.getElementById('blocks-container');
+
+  const editorId = `editor-${textBlockCounter}`;
+  const toolbarId = `toolbar-${textBlockCounter}`;
+
+  const textBlock = `
+    <div class="card mb-3">
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+          <div style="margin-left: -15px;" class="form-group d-flex align-items-center justify-content-between">
+            <input style="border: none; font-size: 20px; font-weight: normal;"
+                   type="text" class="form-control me-3" placeholder="Введите название...">
+            <button type="submit" class="btn btn-outline-primary">Сохранить</button>
+          </div>
+
+          <!-- Панель инструментов -->
+          <trix-toolbar style="margin-top: -25px" id="${toolbarId}"></trix-toolbar>
+
+          <!-- Редактор с привязкой к toolbar -->
+          <div style="margin-top: -15px" class="form-group trix-container">
+            <input id="${editorId}" type="hidden" name="editor">
+            <trix-editor input="${editorId}" toolbar="${toolbarId}" placeholder="Введите текст..."></trix-editor>
+          </div>
+
+          <div class="form-group">
+            <input class="typeahead tt-input" type="number" placeholder="Введите номер страницы">
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  container.insertAdjacentHTML('beforeend', textBlock);
+}
+
+function addTestBlock() {
+  const container = document.getElementById('blocks-container');
+  const testBlock = `
+    <div class="card mb-3">
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+          <div style="margin-left: -15px;" class="form-group d-flex align-items-center justify-content-between mt-2">
+            <input style="border: none; font-size: 20px; font-weight: normal;"
+                   type="text" class="form-control me-3" placeholder="Введите вопрос...">
+            <button type="submit" class="btn btn-outline-primary">Сохранить</button>
+          </div>
+          <div class="form-group row">
+            <label class="col-sm-3 col-form-label">Ответ 1</label>
+            <div class="col-sm-9">
+              <input type="text" class="form-control" placeholder="Введите ответ...">
+            </div>
+          </div>
+          <div class="form-group row">
+            <label class="col-sm-3 col-form-label">Ответ 2</label>
+            <div class="col-sm-9">
+              <input type="text" class="form-control" placeholder="Введите ответ...">
+            </div>
+          </div>
+          <div class="form-group">
+            <button type="button" class="btn btn-inverse-primary btn-fw">Добавить ответ</button>
+          </div>
+          <div class="form-group">
+            <input class="typeahead tt-input" type="number" placeholder="Введите номер правильного ответа">
+          </div>
+          <div class="form-group">
+            <input class="typeahead tt-input" type="number" placeholder="Введите номер страницы">
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  container.insertAdjacentHTML('beforeend', testBlock);
+}
+</script>
+{% endblock %}

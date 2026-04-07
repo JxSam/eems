@@ -1,0 +1,97 @@
+{% extends "dashboard_base.html" %}
+{% block title %}ЭУМО - Контакты преподавателей{% endblock %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <div class="card mb-3">
+    <div class="col-md-12 d-flex gap-3 align-items-center justife-content-center" style="padding: 20px">
+      <div class="row">
+        <a class="ml-2" href="{% url 'home' %}">
+          <button type="button" class="btn btn-inverse-primary btn-rounded btn-icon">
+            <i class="ti-angle-left"></i>
+          </button>
+        </a>
+        <div class="ml-3 d-flex flex-column">
+          <h3 class="mb-2">Связаться с преподавателем</h3>
+          <h6 class="card-description mb-0">
+            Выберите своего преподавателя, чтобы узнать контакты
+          </h6>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12 mb-3 grid-margin stretch-card">
+      <div class="card">
+        <div class="card-body">
+          <div class="alert alert-info mb-4">
+            Не забудьте добавить свои контакты в <a href="{% url 'settings' %}" class="alert-link">настройках</a>
+          </div>
+
+          <div class="accordion" id="teachersAccordion">
+            {% for teacher in teachers %}
+            <div class="card mb-2">
+              <div class="card-header p-3" style="background-color: #f8f9fa;">
+                <h5 class="mb-0">
+                  <button class="btn btn-block text-left p-0" type="button" data-toggle="collapse" data-target="#teacher-{{ teacher.id }}" aria-expanded="true" aria-controls="teacher-{{ teacher.id }}">
+                    <span class="d-flex justify-content-between align-items-center">
+                      <span>{{ teacher.get_full_name|default:teacher.username }}</span>
+                      <i class="ti-angle-down"></i>
+                    </span>
+                  </button>
+                </h5>
+              </div>
+              <div id="teacher-{{ teacher.id }}" class="collapse" aria-labelledby="headingOne" data-parent="#teachersAccordion">
+                <div class="card-body">
+                  <div class="row mt-2">
+                    <div class="col-md-4">
+                      <h6>✉️Email</h6>
+                      <p>
+                        {% if teacher.email %}
+                          <a href="mailto:{{ teacher.email }}">{{ teacher.email }}</a>
+                        {% else %}
+                          <span class="text-muted">Не указан</span>
+                        {% endif %}
+                      </p>
+                    </div>
+                    <div class="col-md-4">
+                      <h6>📞Телефон</h6>
+                      <p>
+                        {% if teacher.phone_number %}
+                          <a href="tel:{{ teacher.phone_number }}">{{ teacher.phone_number }}</a>
+                        {% else %}
+                          <span class="text-muted">Не указан</span>
+                        {% endif %}
+                      </p>
+                    </div>
+                    <div class="col-md-4">
+                      <h6>✈️Telegram</h6>
+                      <p>
+                        {% if teacher.telegram %}
+                          <a href="https://t.me/{{ teacher.telegram|cut:'@' }}" target="_blank">
+                            {{ teacher.telegram }}
+                          </a>
+                        {% else %}
+                          <span class="text-muted">Не указан</span>
+                        {% endif %}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% empty %}
+            <div class="alert alert-warning">
+              Преподаватели не найдены
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

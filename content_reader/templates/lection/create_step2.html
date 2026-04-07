@@ -1,0 +1,317 @@
+{% extends "dashboard_base.html" %}
+{% block title %}ЭУМО - Создание тестов{% endblock %}
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/trix/1.3.1/trix.css">
+<style>
+.save-status {
+    color: #ff5e5e;
+    font-weight: 500;
+    margin-right: 10px;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+  }
+  .save-status.hidden {
+    opacity: 0;
+  }
+  .input-group-text {
+        transition: all 0.3s ease;
+        min-width: 180px;
+    }
+
+    .answer-group {
+        transition: all 0.3s ease;
+    }
+
+    .correct-answer-toggle:hover .input-group-text:not(.bg-success) {
+        background-color: #e9ecef !important;
+    }
+  trix-editor {
+    border: none;
+    box-shadow: none;
+    position: relative;
+    max-height: 450px;
+    /* Ограничиваем высоту */
+    overflow-y: auto;
+    /* Добавляем вертикальный скролл */
+  }
+
+  trix-toolbar {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    position: sticky;
+    top: 10px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 1000;
+  }
+
+  trix-toolbar.active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  trix-toolbar .trix-button-group {
+    background: none;
+    border: none;
+  }
+
+  trix-toolbar .trix-button {
+    background: none;
+    border: none;
+    padding: 5px;
+    color: #555;
+  }
+
+  trix-toolbar .trix-button:hover {
+    background: none;
+    color: #000;
+  }
+
+  /* Анимация для уведомлений */
+  .alert {
+    transition: opacity 0.15s linear;
+  }
+
+  .alert.fade:not(.show) {
+    opacity: 0;
+  }
+
+  .alert.show {
+    opacity: 1;
+  }
+
+  /* Отступ между уведомлениями */
+  .alert:not(:last-child) {
+    margin-bottom: 10px;
+  }
+</style>
+{% endblock %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <div class="card mb-3">
+    <div class="col-md-12 d-flex gap-3 align-items-center justife-content-center" style="padding: 20px">
+      <div class="row ">
+        <a class="ml-2" href="{% url 'editor' %}">
+          <button type="button" class="btn btn-inverse-primary btn-rounded btn-icon">
+            <i class="ti-angle-left"></i>
+          </button>
+        </a>
+        <div class="ml-3 d-flex flex-column">
+          <h4 class="mb-2">Редактирование содержимого темы</h4>
+          <h6 class="card-description mb-0">Добавьте тест или текст для чтения</h6>
+        </div>
+      </div>
+      <div class="dropdown ml-auto">
+        <button type="button" class="btn btn-dark dropdown-toggle" id="dropdownMenuIconButton7" data-toggle="dropdown"
+          aria-haspopup="true" aria-expanded="false">
+          <i class="ti-settings"></i>
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuIconButton7">
+          <h6 class="dropdown-header">Переход</h6>
+          {% for type, step in steps %}
+            <a class="dropdown-item mb-2" href="#{{ step }}">Страница {{ step }}</a>
+          {% endfor %}
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="{{ content.get_absolute_url }}">Просмотреть</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="" id="blocks-container">
+    {% for subcontent in subcontents %}
+    <div class="card mb-3" data-id="{{ subcontent.id }}" data-type="text">
+      <div class="card-body" id="{{ subcontent.step }}">
+        <form class="block-form" method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="type" value="text">
+          <input type="hidden" name="id" value="{{ subcontent.id }}">
+          <div style="margin-left: -15px;"
+            class="form-group d-flex align-items-center justify-content-between border-bottom border-2">
+            <input name="title" style="border: none; font-size: 20px; font-weight: normal;" type="text"
+              class="form-control me-3" placeholder="Введите название..." value="{{ subcontent.title }}">
+            <div class="d-flex gap-3 align-items-center justify-content-center">
+              <button type="submit" style="margin: 5px" class="btn btn-outline-primary">Сохранить</button>
+              <button type="button" class="btn btn-inverse-danger btn-icon delete-block">
+                <i class="ti-close"></i>
+              </button>
+            </div>
+          </div>
+
+          <trix-toolbar style="margin-top: -25px" id="toolbar-{{ subcontent.id }}"></trix-toolbar>
+
+          <div style="margin-top: -10px" class="form-group trix-container">
+            <input id="editor-{{ subcontent.id }}" type="hidden" name="body" value="{{ subcontent.body }}">
+            <trix-editor input="editor-{{ subcontent.id }}" toolbar="toolbar-{{ subcontent.id }}"
+              placeholder="Введите текст..."></trix-editor>
+          </div>
+
+          <div class="form-group">
+            <input name="step" class="typeahead tt-input" type="number" placeholder="Введите номер страницы"
+              value="{{ subcontent.step }}">
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+    {% for test in tests %}
+    <div class="card mb-3" data-id="{{ test.id }}" data-type="test" id="{{ test.step }}">
+      <div class="card-body">
+        <form class="block-form" method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="type" value="test">
+          <input type="hidden" name="id" value="{{ test.id }}">
+          <div style="margin-left: -15px;" class="form-group d-flex align-items-center justify-content-between mt-2">
+            <input name="title" style="border: none; font-size: 20px; font-weight: normal;" type="text"
+              class="form-control me-3" placeholder="Введите название теста..." value="{{ test.title }}">
+            <div class="d-flex gap-3 align-items-center justify-content-center">
+              <button type="button" style="margin: 5px" class="btn btn-outline-primary"
+                onclick="Editor.openTestEditor(this.closest('.card'))">
+                Редактировать
+              </button>
+              <button type="button" class="btn btn-inverse-danger btn-icon delete-block">
+                <i class="ti-close"></i>
+              </button>
+            </div>
+
+          </div>
+          <div class="form-group">
+            <input name="step" class="typeahead tt-input" type="number" placeholder="Введите номер страницы"
+              value="{{ test.step }}">
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+    {% for video in videos %}
+    <div class="card mb-3" data-id="{{ video.id }}" data-type="video" id="{{ video.step }}">
+      <div class="card-body">
+        <form class="block-form" method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="type" value="video">
+          <input type="hidden" name="id" value="{{ video.id }}">
+          <div style="margin-left: -15px;"
+            class="form-group d-flex align-items-center justify-content-between">
+            <label style="border: none; font-size: 20px; font-weight: normal;" class="form-control me-3">Видео</label>
+            <div class="d-flex gap-3 align-items-center justify-content-center">
+              <button type="submit" style="margin: 5px" class="btn btn-outline-primary">Сохранить</button>
+              <button type="button" class="btn btn-inverse-danger btn-icon delete-block">
+                <i class="ti-close"></i>
+              </button>
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="exampleInputUrl" class="col-sm-3 col-form-label">Ссылка</label>
+            <div class="col-sm-9">
+              <input name="title" type="text" class="form-control" id="exampleInputUrl"
+                placeholder="Введите ссылку на видео из VK" value="{{ video.url }}">
+            </div>
+          </div>
+          <div class="form-group">
+            <input name="step" class="typeahead tt-input" type="number" placeholder="Номер страницы"
+              value="{{ video.step }}">
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+
+    <!-- Модальное окно для редактирования теста -->
+    <div class="modal fade" id="testEditorModal" tabindex="-1" role="dialog" aria-labelledby="testEditorModalLabel"
+      aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="testEditorModalLabel">Редактирование теста</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form id="testEditForm">
+              <input type="hidden" name="test_id" id="testIdInput">
+              <div class="form-group">
+                <label for="testTitle">Название теста</label>
+                <input type="text" class="form-control" id="testTitle" name="title">
+              </div>
+              <div class="form-group">
+                <label for="testStep">Номер страницы</label>
+                <input type="number" class="form-control" id="testStep" name="step">
+              </div>
+
+              <h5 class="mt-4">Вопросы</h5>
+              <div id="questionsContainer">
+                <!-- Вопросы будут добавляться сюда -->
+              </div>
+               <div class="btn-group">
+      <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+        aria-expanded="false">
+        <i class="ti-plus"></i> Добавить
+      </button>
+      <div class="dropdown-menu">
+        <a class="dropdown-item" onclick="Editor.addQuestion('MC')">Выбор ответа</a>
+        <a class="dropdown-item" onclick="Editor.addQuestion('FB')">На дополнение</a>
+        <a class="dropdown-item" onclick="Editor.addQuestion('MT')">На соответствие</a>
+      </div>
+    </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+            <button type="button" class="btn btn-primary" onclick="Editor.saveTest()">
+              Сохранить тест
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Уведомления (появляются вверху страницы) -->
+    <div id="notification-area" style="position: fixed; top: 80px; right: 20px; z-index: 1100; width: 350px;"></div>
+  </div>
+  <div class="d-flex justify-content-center">
+    <div class="btn-group">
+      <button type="button" class="btn btn-primary btn-lg dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+        aria-expanded="false">
+        <i class="ti-plus"></i> Добавить
+      </button>
+      <div class="dropdown-menu">
+        <a class="dropdown-item" href="#" onclick="Editor.addTextBlock(event)">Текст</a>
+        <a class="dropdown-item" href="#" onclick="Editor.addTestBlock(event)">Тест</a>
+        <a class="dropdown-item" href="#" onclick="Editor.addVideoBlock(event)">Видео</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/trix/1.3.1/trix.js"></script>
+<script>
+  // Инициализация глобальных переменных только если они не существуют
+  window.djangoContext = window.djangoContext || {
+    csrfToken: '{{ csrf_token }}',
+    editCourseUrl: '{% url "edit_course" content.slug %}',
+    staticUrl: '{% static "" %}'
+  };
+</script>
+
+<script src="{% static 'js/text_test.js' %}"></script>
+<script>
+  // Дублируем объявление функций в глобальной области видимости
+  if (typeof addTextBlock === 'undefined') {
+    window.addTextBlock = function (e) {
+      if (e) e.preventDefault();
+      // Реализация функции из text_test.js
+    };
+  }
+
+  if (typeof addTestBlock === 'undefined') {
+    window.addTestBlock = function (e) {
+      if (e) e.preventDefault();
+      // Реализация функции из text_test.js
+    };
+  }
+</script>
+{% endblock %}

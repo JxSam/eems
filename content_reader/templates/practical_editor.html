@@ -1,0 +1,53 @@
+{% extends "dashboard_base.html" %}
+{% block title %}ЭУМО - Создание тестов{% endblock %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <div class="row">
+    <div class="col-md-12 grid-margin">
+      <div class="row">
+        <div class="col-12 col-xl-8 mb-4 mb-xl-0">
+          <h3 class="font-weight-bold">Редактор практических работ</h3>
+          <h6 class="font-weight-normal mb-0">Для редактирования нажмите на существующую тему, либо создайте
+            новую нажав на кнопку.</h6>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    {% if not contents %}
+    <div class="card-body">
+    <b>Не загружено ни одной работы</b>
+    </div>
+    {% else %}
+    {% for obj in contents|dictsort:"number" %}
+    <a href="{{ obj.get_absolute_url_edit }}" class="col-md-6 stretch-card grid-margin grid-margin-md-1" style="text-decoration: none;">
+      <div class="card data-icon-card-primary stretch-card transparent">
+        <div class="card-body card {% cycle 'card-tale' 'card-dark-blue' 'card-light-blue' 'card-light-danger' %}">
+          <p class="card-title text-white">Тема {{ obj.number }}</p>
+          <div class="row">
+            <div class="col-8 text-white">
+              <h3>{{ obj.title }}</h3>
+              <p class="text-white font-weight-500 mb-0">{{ obj.description }}</p>
+            </div>
+            <div class="col-4 background-icon">
+              {% if obj.image %}
+              <img src="{{ obj.image.url }}" style="width: 150px; object-fit: contain;"></img>
+              {% else %}
+              <img src="" alt="Image">
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+    {% endif %}
+  </div>
+  <a style="margin: auto" type="button" href="{% url 'practical_create' %}" class="btn col-md-4 btn-primary btn-lg btn-block">
+    <i class="ti-plus"></i>
+    Создать
+  </a>
+</div>
+{% endblock %}

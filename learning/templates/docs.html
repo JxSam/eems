@@ -1,0 +1,136 @@
+{% extends "dashboard_base.html" %}
+{% block title %}ЭУМО - Практические работы{% endblock %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+  <!-- Заголовок -->
+  <div class="card mb-3">
+    <div class="col-md-12 d-flex gap-3 align-items-center" style="padding: 20px">
+      <div class="row">
+        <a class="ml-2" href="{% url 'home' %}" title="Вернуться на главную">
+          <button type="button" class="btn btn-inverse-primary btn-rounded btn-icon">
+            <i class="ti-angle-left"></i>
+          </button>
+        </a>
+        <div class="ml-3 d-flex flex-column">
+          <h4 class="mb-2">Список загруженных практических работ</h4>
+          <h6 class="card-description mb-0">
+            Показано {{ completed_practicals }} из {{ total_practicals }} работ ({{ graded_practicals }} проверено)
+          </h6>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Основная таблица -->
+  <div class="row">
+    <div class="col-lg-12 grid-margin stretch-card">
+      <div class="card">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Номер</th>
+                  <th>Название работы</th>
+                  <th>Дата загрузки</th>
+                  <th>Оценка</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for work in practical_works %}
+                <tr>
+                  <td>{{ work.practical.number }}</td>
+                  <td>{{ work.practical.title }}</td>
+                  <td>{{ work.uploaded_at|date:"d. m. Y H:i" }}</td>
+                  <td>
+                    {% if work.score %}
+                      <span class="badge
+                        {% if work.score >= 4 %}badge-success
+                        {% elif work.score == 3 %}badge-warning
+                        {% else %}badge-danger
+                        {% endif %}">
+                        {{ work.score }}
+                      </span>
+                    {% else %}
+                      <span class="badge badge-info">На проверке</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="d-flex">
+                      <a href="{{ work.file.url }}"
+                         class="btn btn-sm btn-outline-primary mr-2"
+                         download
+                         title="Скачать файл">
+                        <i class="ti-download"></i>
+                      </a>
+                      {% if request.user.role == 'teacher' %}
+                      <a href="{% url 'grade_practical' work.id %}"
+                         class="btn btn-sm btn-outline-secondary mr-2"
+                         title="Оценить работу">
+                        <i class="ti-pencil"></i>
+                      </a>
+                      {% endif %}
+                      <button class="btn btn-sm btn-outline-info view-comment-btn"
+                              data-comment="{{ work.comment|default:'Комментарий отсутствует' }}"
+                              title="Просмотреть комментарий">
+                        <i class="ti-comment"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="text-center py-4">
+                    <i class="ti-folder" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p class="mt-2">Нет загруженных работ</p>
+                    <a href="{% url 'practical' %}" class="btn btn-primary btn-sm mt-2">
+                      Перейти к практическим работам
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно для комментария -->
+<div class="modal fade" id="commentModal" tabindex="-1" role="dialog" aria-labelledby="commentModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="commentModalLabel">Комментарий преподавателя</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="commentModalBody">
+        <!-- Сюда будет вставлен комментарий -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(document).ready(function() {
+    // Обработчик кнопки просмотра комментария
+    $('.view-comment-btn').click(function() {
+      const comment = $(this).data('comment');
+      $('#commentModalBody').text(comment);
+      $('#commentModal').modal('show');
+    });
+  });
+</script>
+{% endblock %}

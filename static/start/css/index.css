@@ -1,0 +1,130 @@
+@font-face {
+    font-family: 'Racama'; /* Придумываем название шрифта */
+    src: url('fonts/Racama.otf') format('woff2'); /* Основной формат */
+    font-weight: normal;
+    font-style: normal;
+}
+body{
+    margin: 0px;
+    padding: 0px;
+    font-family: 'Racama', sans-serif;
+    background-image: url("../image/background.png");
+    background-size: 60%; /* Уменьшение размера фона до 30% */
+    background-repeat: no-repeat; /* Чтобы фон не повторялся */
+    background-position: 100% 50%;
+}
+/* Верхний блок */
+.upper{
+    padding-left: 200px;
+    padding-right: 200px;
+    margin-top: 30px;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items:center;
+}
+h1{
+    font-size: 20px;
+    font-weight: normal;
+    text-transform: uppercase;
+}
+.menu{
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+.sign-img{
+    width: 25px;
+    object-fit: contain;
+    margin-bottom: 5px;
+}
+.sign-button{
+    font-style: normal;
+    text-transform: none;
+}
+.menu-button{
+    color: black;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+i{
+    font-size: 20px;
+}
+.menu-button:hover{
+    color: #4d83ff;
+}
+/* Основной блок */
+main{
+    padding-left: 200px;
+    padding-right: 200px;
+    height: 700px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.main-block{
+    display: flex;
+    flex-direction: column;
+}
+.container{
+    background-color: #7380ec;
+    border-radius: 10px;
+    height: 220px;
+    width: 20px;
+}
+.button-next{
+    margin-top: 20px;
+    display: flex;
+    background-color: #7380ec;
+    border-radius: 15px;
+    height: 50px;
+    text-decoration: none;
+    color: #000;
+    text-align: center;
+    justify-content: center;
+    
+}
+.button-next:hover {
+    color: #000;
+  background-color: #6896ff;
+  border-color: #5f8fff;
+}
+.text-ani{
+    display: flex;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    gap:10px;
+}
+.subtext{
+    font-size: 20px;
+    width: 500px;
+    position: relative; /* Чтобы можно было использовать transform */
+    opacity: 0; /* Изначально текст скрыт */
+    transform: translateX(100%); /* Размещаем текст справа за пределами экрана */
+    animation: slideIn 1s forwards; /* Применяем анимацию */
+}
+@keyframes slideIn {
+    0% {
+        opacity: 0;
+        transform: translateX(-100%); /* Текст полностью скрыт слева */
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0); /* Текст перемещается в исходное положение */
+    }
+}
+/* Нижний блок */
+footer{
+    padding-left: 200px;
+    padding-right: 200px;
+    background-color: rgb(192, 192, 192);
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: rgb(98, 98, 98);
+}
+/* login forms */

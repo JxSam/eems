@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+{% load static %}
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>{% block title %}{% endblock %}</title>
+  <!-- icons -->
+  <link rel="stylesheet" href="{% static 'vendors/feather/feather.css' %}">
+  <link rel="stylesheet" href="{% static 'vendors/vendor.bundle.base.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'vendors/ti-icons/css/themify-icons.css' %}">
+  <!-- end icons -->
+  <!-- Plugin css for this page -->
+  <link rel="stylesheet" href="{% static 'vendors/datatables.net-bs4/dataTables.bootstrap4.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'js/select.dataTables.min.css' %}">
+  <!-- End plugin css for this page -->
+  <!-- inject:css -->
+  <link rel="stylesheet" href="{% static 'css/vertical-layout-light/style.css' %}">
+  <!-- endinject -->
+  <link rel="shortcut icon" href="{% static 'images/logo.png' %}" />
+</head>
+
+<body>
+  <div class="container-scroller">
+    <!-- partial:partials/_navbar.html -->
+    <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
+      <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
+        <a class="navbar-brand brand-logo mr-2" href="index.html" style="margin-top:10px">
+          <div class="logo">
+            <h3>ЭУ<span class="danger">МО</span></h3>
+          </div>
+        </a>
+        <a class="navbar-brand brand-logo-mini" href="index.html" style="margin-top:10px">
+          <div class="logo">
+            <h3 style="font-size: 18px;">ЭУ<span class="danger">МО</span></h3>
+          </div>
+        </a>
+      </div>
+      <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
+        <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
+          <span class="icon-menu"></span>
+        </button>
+        <ul class="navbar-nav navbar-nav-right">
+          <li class="nav-item dropdown">
+            <div class="d-flex flex-column align-items-center" style="line-height: 1;">
+              <b>{{ user.username|default:'Guest' }}</b>
+              <small class="text-muted">{{ user.get_role_display }}</small>
+            </div>
+          </li>
+          <li class="nav-item nav-profile dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
+              <img src="{% static 'images/profile.png' %}" alt="profile" />
+            </a>
+            <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
+              <a class="dropdown-item">
+                <i class="ti-settings text-primary"></i>
+                Настройки
+              </a>
+              <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button class='dropdown-item' type="submit">
+                  <i class='ti-power-off text-primary'></i>
+                  Выйти
+                </button>
+              </form>
+            </div>
+          </li>
+        </ul>
+        <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button"
+          data-toggle="offcanvas">
+          <span class="icon-menu"></span>
+        </button>
+      </div>
+    </nav>
+    <!-- partial -->
+    <div class="container-fluid page-body-wrapper">
+      <nav class="sidebar sidebar-offcanvas" id="sidebar">
+        <ul class="nav">
+          <li class="nav-item {% if request.path == '/home/' %}active{% endif %}">
+            <a class="nav-link" href="{% url 'home' %}">
+              <i class="icon-grid menu-icon"></i>
+              <span class="menu-title">Главная</span>
+            </a>
+          </li>
+          <li class="nav-item {% if request.path == '/learn/' %}active{% endif %}">
+            <a class="nav-link" href="{% url 'learn' %}">
+              <i class="icon-book menu-icon"></i>
+              <span class="menu-title">Обучение</span>
+            </a>
+          </li>
+          <li class="nav-item {% if request.path == '/information/' %}active{% endif %}">
+            <a class="nav-link" href="{% url 'info' %}">
+              <i class="icon-paper menu-icon"></i>
+              <span class="menu-title">Теория</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">
+              <i class="icon-grid-2 menu-icon"></i>
+              <span class="menu-title">Тесты</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <div class="main-panel">
+        {% block content %}{% endblock %}
+        <!-- partial:partials/_footer.html -->
+        <footer class="footer">
+          <div class="d-sm-flex justify-content-center justify-content-sm-between">
+            <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2025. All rights
+              reserved.</span>
+            <span class="float-none float-sm-right d-block mt-1 mt-sm-0 text-center">Hand-crafted & made with <i
+                class="ti-heart text-danger ml-1"></i></span>
+          </div>
+        </footer>
+      </div>
+      <!-- partial end -->
+    </div>
+    <!-- page-body-wrapper ends -->
+  </div>
+  <!-- plugins:js -->
+  <script src="{% static 'vendors/js/vendor.bundle.base.js' %}"></script>
+  <!-- endinject -->
+
+  <!-- inject:js -->
+  <script src="{% static 'js/off-canvas.js' %}"></script>
+  <script src="{% static 'js/hoverable-collapse.js' %}"></script>
+  <script src="{% static 'js/template.js' %}"></script>
+  <script src="{% static 'js/settings.js' %}"></script>
+  <script src="{% static 'js/todolist.js' %}"></script>
+  <!-- endinject -->
+  <!-- Custom js for this page-->
+  <script src="{% static 'js/dashboard.js' %}"></script>
+  <script src="{% static 'js/Chart.roundedBarCharts.js' %}"></script>
+  <!-- End custom js for this page-->
+</body>
+
+</html>

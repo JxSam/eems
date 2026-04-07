@@ -1,0 +1,386 @@
+{% extends "dashboard_base.html" %}
+{% block title %}{{ Content.title }}в{% endblock %}
+{% block styles %}
+<style>
+    .card img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .answer-status {
+        margin-left: 10px;
+        font-weight: bold;
+    }
+
+    .correct-answer {
+        color: #28a745;
+    }
+
+    .wrong-answer {
+        color: #dc3545;
+    }
+
+    /* Стили для теста */
+    .test-question {
+        margin-bottom: 25px;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .question-header {
+        background-color: rgba(0, 85, 169, 0.063);
+        padding: 12px 15px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .answer-option {
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .answer-option:last-child {
+        border-bottom: none;
+    }
+
+    .submit-btn {
+        margin-top: 20px;
+    }
+
+    .test-results {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .result-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .matching-column {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+    }
+
+    .matching-list {
+        min-height: 100px;
+        padding: 10px;
+        list-style: none;
+        border: 2px dashed #dee2e6;
+        border-radius: 6px;
+    }
+
+    .matching-item {
+        background-color: white;
+        padding: 10px 15px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+        cursor: grab;
+    }
+
+    .matching-item:active {
+        cursor: grabbing;
+    }
+
+    .matching-header {
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #495057;
+    }
+
+    .drag-ghost {
+        opacity: 0.5;
+        background: #c8ebfb;
+    }
+</style>
+{% endblock %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+    <div class="card mb-3">
+        <div class="col-md-12 d-flex gap-3 align-items-center justife-content-center" style="padding: 20px">
+            <div class="row">
+                <a class="ml-2" href="{% url 'learn' %}">
+                    <button type="button" class="btn btn-inverse-primary btn-rounded btn-icon">
+                        <i class="ti-angle-left"></i>
+                    </button>
+                </a>
+                <div class="ml-3 d-flex flex-column">
+                    <h4 class="mb-2">
+                        {% if is_test %}
+                        {{ Test.title }}
+                        {% elif is_video %}
+                        Видео
+                        {% else %}
+                        {{ Subcontent.title }}
+                        {% endif %}
+                    </h4>
+                    <h6 class="card-description mb-0">{{ Content.title }} | {% for type, step in steps %} {% if current_step == step %}{{ step }}{% else %}{% endif %}{% endfor %} страница</h6>
+                </div>
+            </div>
+            <div class="dropdown ml-auto">
+                <button type="button" class="btn btn-dark dropdown-toggle" id="dropdownMenuIconButton7"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="ti-menu"></i>
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuIconButton7">
+                    <h6 class="dropdown-header">Переход</h6>
+                    {% for type, step in steps %}
+                    <a href="{% if current_step == step %}#{% else %} {% url 'preview' slug=Content.slug step=step %} {% endif %}"
+                        class="dropdown-item {% if current_step == step %}active{% endif %}">
+                        {{ step }} страница
+                    </a>
+                    {% endfor %}
+                    {% if request.user.role == "teacher" %}
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="{{ Content.get_absolute_url_edit }}">Редактировать</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    {% if is_test %}
+                    <form id="testForm" method="post" action="{% url 'check_test' Test.id %}">
+                        {% csrf_token %}
+                        {% for question in questions %}
+                        <div class="test-question" data-question-id="{{ question.id }}">
+                            <div class="question-header">
+                                <h6 class="mb-0">{{ question.text }}</h6>
+                                <div class="answer-status-container"></div>
+                            </div>
+
+                            {% if question.question_type == 'MC' %}
+                            {% for answer in question.answers.all %}
+                            <div class="answer-option">
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input type="radio" class="form-check-input" name="question_{{ question.id }}"
+                                            value="{{ answer.id }}" required>
+                                        {{ answer.text }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% elif question.question_type == 'FB' %}
+                            <div class="answer-option">
+                                <div class="form-group">
+                                    <input type="text" class="form-control fill-blank-input"
+                                        name="question_{{ question.id }}" placeholder="Введите ответ" required>
+                                </div>
+                            </div>
+                            {% elif question.question_type == 'MT' %}
+                            <div class="matching-container">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="matching-column">
+                                            <h6 class="matching-header">Термины</h6>
+                                            <ul class="matching-list" id="terms-list-{{ question.id }}">
+                                                {% for pair in question.matching_pairs.all %}
+                                                <li class="matching-item term-card" data-term-id="{{ pair.id }}">
+                                                    {{ pair.term }}
+                                                    <input type="hidden" name="term_{{ question.id }}_{{ pair.id }}"
+                                                        value="{{ pair.id }}">
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="matching-column">
+                                            <h6 class="matching-header">Определения</h6>
+                                            <ul class="matching-list" id="definitions-list-{{ question.id }}">
+                                                {% for pair in question.matching_pairs.all|dictsort:"definition" %}
+                                                <li class="matching-item definition-card"
+                                                    data-definition-id="{{ pair.id }}">
+                                                    {{ pair.definition }}
+                                                    <input type="hidden"
+                                                        name="definition_{{ question.id }}_{{ pair.id }}"
+                                                        value="{{ pair.definition }}">
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+
+                        <!-- Блок с результатами -->
+                        <div id="testResults" class="test-results" style="display: none;">
+                            <div class="result-stats">
+                                <p>Правильных ответов: <strong><span id="correct">0</span> из <span id="total">{{
+                                            questions|length }}</span></strong></p>
+                                <p>Ваш результат: <strong><span id="score">0</span>%</strong></p>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-inverse-info btn-fw submit-btn mt-0">Отправить
+                            тест</button>
+                    </form>
+                    {% elif is_video %}
+                    <div class="card">
+                        <div class="video-container">
+                            {% with ids=Video.get_video_ids %}
+                            {% if ids.0 and ids.1 %}
+                            <iframe style="border-radius: 10px;"
+                                src="https://vkvideo.ru/video_ext.php?oid={{ ids.0 }}&id={{ ids.1 }}&hd=2&autoplay=0"
+                                width="853" height="480"
+                                allow="autoplay; encrypted-media; fullscreen; picture-in-picture; screen-wake-lock;"
+                                frameborder="0" allowfullscreen></iframe>
+                            {% else %}
+                            <p>Некорректный формат ссылки на видео</p>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+
+                    {% else %}
+                    <div class="card">
+                        {{ Subcontent.body|safe }}
+                    </div>
+                    {% endif %}
+
+                    <div class="btn-group mt-3" role="group">
+                        {% for type, step in steps %}
+                        <a href="{% url 'preview' slug=Content.slug step=step %}"
+                            class="btn btn-outline-dark d-flex align-items-center justify-content-center {% if current_step == step %}active{% endif %}"
+                            style="max-width: 40px; height: 40px;">
+                            {{ step }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'js/file-upload.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+<script>
+$(document).ready(function () {
+    // Инициализация перетаскивания для вопросов на соответствие
+    $('.matching-container').each(function() {
+        const container = $(this);
+        const questionId = container.closest('.test-question').data('question-id');
+        
+        new Sortable(document.getElementById(`terms-list-${questionId}`), {
+            group: `matching-${questionId}`,
+            animation: 150,
+            ghostClass: 'drag-ghost'
+        });
+
+        new Sortable(document.getElementById(`definitions-list-${questionId}`), {
+            group: `matching-${questionId}`,
+            animation: 150,
+            ghostClass: 'drag-ghost',
+            onEnd: function() {
+                saveMatchingPairs(questionId);
+            }
+        });
+    });
+
+    // Перед отправкой формы собираем данные о сопоставлении
+    $('#testForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Собираем данные о сопоставлениях
+        $('.matching-container').each(function() {
+            const questionId = $(this).closest('.test-question').data('question-id');
+            saveMatchingPairs(questionId);
+        });
+        
+        // Продолжаем стандартную отправку формы
+        submitTestForm();
+    });
+
+    function saveMatchingPairs(questionId) {
+        // Удаляем старые скрытые поля с ответами
+        $(`input[name^="question_${questionId}"]`).remove();
+        
+        // Создаем новые скрытые поля с текущими сопоставлениями
+        const termsList = $(`#terms-list-${questionId}`);
+        const definitionsList = $(`#definitions-list-${questionId}`);
+        
+        termsList.find('.term-card').each(function(index) {
+            const termId = $(this).data('term-id');
+            const definitionCard = definitionsList.find('.definition-card').eq(index);
+            
+            if (definitionCard.length) {
+                const definitionId = definitionCard.data('definition-id');
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `question_${questionId}`,
+                    value: `${termId}-${definitionId}`
+                }).appendTo($(`.test-question[data-question-id="${questionId}"]`));
+            }
+        });
+    }
+
+    function submitTestForm() {
+        const form = $('#testForm');
+        const submitBtn = form.find('button[type="submit"]');
+
+        submitBtn.prop('disabled', true);
+        submitBtn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Проверка...');
+
+        // Очищаем предыдущие статусы
+        $('.answer-status').remove();
+
+        $.ajax({
+            type: 'POST',
+            url: form.attr('action'),
+            data: form.serialize(),
+            success: function (response) {
+                if (response.success) {
+                    $('#score').text(response.score);
+                    $('#correct').text(response.correct_answers);
+                    $('#total').text(response.total_questions);
+                    $('#testResults').show();
+
+                    // Добавляем статусы ответов справа от вопросов
+                    response.results.forEach(function(result, index) {
+                        const questionElement = $('.test-question').eq(index);
+                        const statusClass = result.is_correct ? 'correct-answer' : 'wrong-answer';
+                        const statusText = result.is_correct ? 'Правильно' : 'Неправильно';
+
+                        questionElement.find('.question-header').append(
+                            '<span class="answer-status ' + statusClass + '">' + statusText + '</span>'
+                        );
+                    });
+                    
+                    $('html, body').animate({
+                        scrollTop: $('#testResults').offset().top - 100
+                    }, 500);
+                }
+            },
+            error: function () {
+                alert('Произошла ошибка при проверке теста');
+            },
+            complete: function () {
+                submitBtn.prop('disabled', false);
+                submitBtn.html('Отправить тест');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

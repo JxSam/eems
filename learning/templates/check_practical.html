@@ -1,0 +1,176 @@
+{% extends "dashboard_base.html" %}
+{% block title %}ЭУМО - Настройки аккаунта{% endblock %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <div class="card mb-3">
+    <div class="col-md-12 d-flex gap-3 align-items-center justife-content-center" style="padding: 20px">
+      <div class="row ">
+        <a class="ml-2" href="{% url 'home' %}">
+          <button type="button" class="btn btn-inverse-primary btn-rounded btn-icon">
+            <i class="ti-angle-left"></i>
+          </button>
+        </a>
+        <div class="ml-3 d-flex flex-column">
+          <h4 class="mb-2">Проверка заданий</h4>
+          <h6 class="card-description mb-0">Скачайте файл, проверьте задание и выставите оценку студенту</h6>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="accordion" id="practicalAccordion">
+        {% for practical in practicals %}
+        <div class="card">
+          <div class="card-header" id="heading{{ practical.id }}">
+            <h2 class="mb-0">
+              <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse"
+                      data-target="#collapse{{ practical.id }}" aria-expanded="false"
+                      aria-controls="collapse{{ practical.id }}">
+                {{ practical.title }} ({{ practical.practicalfile_set.count }})
+              </button>
+            </h2>
+          </div>
+
+          <div id="collapse{{ practical.id }}" class="collapse" aria-labelledby="heading{{ practical.id }}"
+               data-parent="#practicalAccordion">
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Логин(Имя)</th>
+                      <th>Группа</th>
+                      <th>Оценка</th>
+                      <th>Комментарий</th>
+                      <th>Работа(Файл)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for student in students %}
+                    {% with student_files=student.practicalfile_set.all %}
+                    {% for file in student_files %}
+                    {% if file.practical_id == practical.id %}
+                    <tr>
+                      <td>{{ student.get_full_name|default:student.username }}</td>
+                      <td class="font-weight-bold">{{ student.group.name|default:"-" }}</td>
+                      <td>
+                        <select class="form-control form-control-sm score-select"
+                                data-practical="{{ practical.id }}"
+                                data-student="{{ student.id }}"
+                                data-file="{{ file.id }}">
+                          <option value="" disabled selected>Оценка</option>
+                          {% for value, label in score_choices %}
+                          <option value="{{ value }}" {% if file.score == value %}selected{% endif %}>
+                            {{ label }}
+                          </option>
+                          {% endfor %}
+                        </select>
+                      </td>
+                      <td>
+                        <textarea class="form-control comment-input"
+                                  data-practical="{{ practical.id }}"
+                                  data-student="{{ student.id }}"
+                                  data-file="{{ file.id }}"
+                                  rows="2">{{ file.comment|default:"" }}</textarea>
+                      </td>
+                      <td>
+                        <a href="{{ file.file.url }}" class="badge badge-info" download>Скачать</a>
+                      </td>
+                    </tr>
+                    {% endif %}
+                    {% empty %}
+                    <tr>
+                      <td>{{ student.get_full_name|default:student.username }}</td>
+                      <td class="font-weight-bold">{{ student.group.name|default:"-" }}</td>
+                      <td>
+                        <select class="form-control form-control-sm score-select"
+                                data-practical="{{ practical.id }}"
+                                data-student="{{ student.id }}"
+                                data-file="">
+                          <option value="" disabled selected>Оценка</option>
+                          {% for value, label in score_choices %}
+                          <option value="{{ value }}">{{ label }}</option>
+                          {% endfor %}
+                        </select>
+                      </td>
+                      <td>
+                        <textarea class="form-control comment-input"
+                                  data-practical="{{ practical.id }}"
+                                  data-student="{{ student.id }}"
+                                  data-file=""
+                                  rows="2"></textarea>
+                      </td>
+                      <td>
+                        <span class="badge badge-warning">Не загружено</span>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                    {% endwith %}
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(document).ready(function () {
+    // Функция для отправки данных на сервер
+    function saveData(element) {
+      const practicalId = $(element).data('practical');
+      const studentId = $(element).data('student');
+      const fileId = $(element).data('file');
+      const score = $(element).closest('tr').find('.score-select').val();
+      const comment = $(element).closest('tr').find('.comment-input').val();
+
+      $.ajax({
+        url: '{% url "update_practical_score" %}',
+        method: 'POST',
+        data: {
+          'practical_id': practicalId,
+          'student_id': studentId,
+          'file_id': fileId,
+          'score': score,
+          'comment': comment,
+          'csrfmiddlewaretoken': '{{ csrf_token }}'
+        },
+        success: function (response) {
+          if (response.success) {
+            toastr.success('Данные сохранены');
+          } else {
+            toastr.error('Ошибка сохранения: ' + response.error);
+          }
+        },
+        error: function () {
+          toastr.error('Ошибка сервера');
+        }
+      });
+    }
+
+    // Обработка изменения оценки
+    $('.score-select').change(function () {
+      saveData(this);
+    });
+
+    // Обработка изменения комментария (с задержкой 1 секунда после ввода)
+    let commentTimeout;
+    $('.comment-input').on('input', function() {
+      clearTimeout(commentTimeout);
+      commentTimeout = setTimeout(() => {
+        saveData(this);
+      }, 1000);
+    });
+  });
+</script>
+{% endblock %}

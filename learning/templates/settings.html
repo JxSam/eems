@@ -1,0 +1,90 @@
+{% extends "dashboard_base.html" %}
+{% block title %}ЭУМО - Настройки аккаунта{% endblock %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <div class="card mb-3">
+    <div class="col-md-12 d-flex gap-3 align-items-center justife-content-center" style="padding: 20px">
+      <div class="row">
+        <a class="ml-2" href="{% url 'home' %}">
+          <button type="button" class="btn btn-inverse-primary btn-rounded btn-icon">
+            <i class="ti-angle-left"></i>
+          </button>
+        </a>
+        <div class="ml-3 d-flex flex-column">
+          <h4 class="mb-2">Настройки аккаунта</h4>
+          <h6 class="card-description mb-0">Изменения автоматически не сохраняются</h6>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria="hidden">×</span>
+        </button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row">
+    <div class="col-12 grid-margin stretch-card">
+      <div class="card">
+        <div class="card-body">
+          <form class="forms-sample" method="POST" action="{% url 'settings' %}">
+            {% csrf_token %}
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="id_first_name">Имя</label>
+                  <input type="text" class="form-control" id="id_first_name" name="first_name"
+                         value="{{ user.first_name }}" placeholder="Имя">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="id_last_name">Фамилия</label>
+                  <input type="text" class="form-control" id="id_last_name" name="last_name"
+                         value="{{ user.last_name }}" placeholder="Фамилия">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="id_email">Email</label>
+              <input type="email" class="form-control" id="id_email" name="email"
+                     value="{{ user.email }}" placeholder="Email" required>
+            </div>
+
+            <div class="form-group">
+              <label for="id_username">Логин</label>
+              <input type="text" class="form-control" id="id_username" name="username"
+                     value="{{ user.username }}" placeholder="Логин" required>
+            </div>
+
+            <div class="form-group">
+              <label for="id_phone_number">Номер телефона</label>
+              <input type="text" class="form-control" id="id_phone_number" name="phone_number"
+                     value="{{ user.phone_number }}" placeholder="+7 (999) 123-45-67">
+            </div>
+
+            <div class="form-group">
+              <label for="id_telegram">Telegram</label>
+              <input type="text" class="form-control" id="id_telegram" name="telegram"
+                     value="{{ user.telegram }}" placeholder="@username">
+            </div>
+
+            <button type="submit" class="btn btn-primary mr-2">Сохранить</button>
+            <a href="{% url 'home' %}" class="btn btn-light">Отмена</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

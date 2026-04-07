@@ -1,0 +1,255 @@
+{% extends "dashboard_base.html" %}
+{% block title %}{{ Practical.title }}{% endblock %}
+{% block styles %}
+<style>
+  .card img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* Стили для навигации по шагам */
+  .step-nav {
+    margin-top: 30px;
+  }
+
+  .step-nav a {
+    margin-right: 5px;
+  }
+
+  .step-nav a.active {
+    background-color: #007bff;
+    color: white;
+  }
+
+.file-upload-container {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.file-upload-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background-color: #4CAF50;
+    width: 0%;
+    transition: width 0.3s;
+    border-radius: 0 0 4px 4px;
+}
+
+.file-upload-info {
+    background-color: #f8f9fa;
+    cursor: default;
+}
+
+.uploaded-file {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f1f1f1;
+    border-radius: 4px;
+}
+
+#upload-status {
+    height: 20px;
+    font-size: 0.8rem;
+}
+
+.input-group-append label {
+    cursor: pointer;
+    margin-bottom: 0;
+}
+</style>
+{% endblock %}
+{% load static %}
+{% block content %}
+
+<div class="content-wrapper">
+  <div class="card mb-3">
+    <div class="col-md-12 d-flex gap-3 align-items-center justife-content-center" style="padding: 20px">
+      <div class="row ">
+        <a class="ml-2" href="{% url 'practical' %}">
+          <button type="button" class="btn btn-inverse-primary btn-rounded btn-icon">
+            <i class="ti-angle-left"></i>
+          </button>
+        </a>
+        <div class="ml-3 d-flex flex-column">
+          <h4 class="mb-2">
+            {% if is_Stepcontent %}
+            {{ StepContent.title }}
+            {% elif is_video %}
+            Видео
+            {% else %}
+            {{ StepContent.title }}
+            {% endif %}
+          </h4>
+          <h6 class="card-description mb-0">
+            {{ Practical.title }} |
+            {% for type, step in steps %}
+                {% if current_step == step %}
+                    {{ step }}
+                {% endif %}
+            {% endfor %}
+            страница
+        </h6>
+        </div>
+      </div>
+      <div class="dropdown ml-auto">
+        <button type="button" class="btn btn-dark dropdown-toggle" id="dropdownMenuIconButton7" data-toggle="dropdown"
+          aria-haspopup="true" aria-expanded="false">
+          <i class="ti-menu"></i>
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuIconButton7">
+          <h6 class="dropdown-header">Переход</h6>
+          {% for type, step in steps %}
+          <a href="{% if current_step == step %}#{% else %} {% url 'practical_step_preview' slug=Practical.slug step=step %} {% endif %}"
+            class="dropdown-item {% if current_step == step %}active{% endif %}">
+            {{ step }} страница
+          </a>
+          {% endfor %}
+          {% if request.user.role == "teacher" %}
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="{{ Practical.get_absolute_url_edit }}">Редактировать</a>
+          {% endif %}
+
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12 grid-margin stretch-card">
+      <div class="card">
+        <div class="card-body">
+
+          <div class="card">
+            {{ StepContent.body|safe }}
+          </div>
+          {% if StepContent.download %}
+    <div class="form-group">
+    <label>Загрузить файл (.doc, .docx, .docs, .txt)</label>
+    <div class="input-group">
+        <input type="text" class="form-control file-input-progress"
+               id="file-name-display"
+               placeholder=".doc, .docx, .docs, .txt"
+               value="{% if user_file %}{{ user_file.filename }}{% endif %}"
+               style="height: 55px; background: linear-gradient(to right, #007bff 0%, #007bff 0%, #f8f9fa 0%, #f8f9fa 100%);"
+               readonly>
+
+        {% if user_file %}
+        <div class="input-group-append">
+            <button class="btn btn-outline-danger border-left-0 delete-file-btn" type="button">
+                <i class="ti-trash"></i>
+            </button>
+        </div>
+        {% endif %}
+
+        <div class="input-group-append">
+            <label class="btn btn-outline-info border-left-0" for="file-upload">
+                <i class="ti-upload mr-1"></i> Загрузить
+                <input type="file" id="file-upload" class="d-none"
+                       accept=".doc,.docx,.docs,.txt">
+            </label>
+        </div>
+    </div>
+    <small id="upload-status" class="form-text text-muted"></small>
+</div>
+{% endif %}
+
+          <div class="btn-group mt-3" role="group">
+            {% for type, step in steps %}
+            <a href="{% url 'practical_step_preview' slug=Practical.slug step=step %}"
+              class="btn btn-outline-dark d-flex align-items-center justify-content-center {% if current_step == step %}active{% endif %}"
+              style="max-width: 40px; height: 40px;">
+              {{ step }}
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+ $(document).ready(function() {
+    // Обработка выбора файла
+    $('#file-upload').change(function() {
+        const fileInput = this;
+        if (fileInput.files.length === 0) return;
+
+        // Показываем имя файла
+        $('#file-name-display').val(fileInput.files[0].name);
+        $('#upload-status').text('Загрузка...').removeClass('text-success text-danger');
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '{% url "upload_practical_file" slug=Practical.slug step=StepContent.step %}', true);
+
+        // Прогресс загрузки
+        xhr.upload.onprogress = function(e) {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                $('#file-name-display').css('background',
+                    `linear-gradient(to right, #007bff 0%, #007bff ${percentComplete}%, #f8f9fa ${percentComplete}%, #f8f9fa 100%)`);
+            }
+        };
+
+        // Обработка завершения загрузки
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                const response = JSON.parse(xhr.responseText);
+                if (response.success) {
+                    $('#upload-status').text('Файл успешно загружен').addClass('text-success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    $('#upload-status').text('Ошибка: ' + (response.error || 'Неизвестная ошибка'))
+                                      .addClass('text-danger');
+                    resetProgress();
+                }
+            } else {
+                $('#upload-status').text('Ошибка загрузки файла').addClass('text-danger');
+                resetProgress();
+            }
+        };
+
+        xhr.onerror = function() {
+            $('#upload-status').text('Ошибка сети').addClass('text-danger');
+            resetProgress();
+        };
+
+        function resetProgress() {
+            $('#file-name-display').css('background', '#f8f9fa');
+        }
+
+        xhr.send(formData);
+    });
+
+    // Обработка удаления файла
+    $(document).on('click', '.delete-file-btn', function() {
+        if (confirm('Вы уверены, что хотите удалить этот файл?')) {
+            $.ajax({
+                url: '{% url "upload_practical_file" slug=Practical.slug step=StepContent.step %}',
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function() {
+                    location.reload();
+                },
+                error: function() {
+                    alert('Ошибка при удалении файла');
+                }
+            });
+        }
+    });
+});
+  </script>
+{% endblock %}
