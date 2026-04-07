@@ -1,5 +1,5 @@
-Create database local
-python manage.py migrate
+<b>Create database local</b><br>
+<code>python manage.py migrate</code>
 
-Start project
-python manage.py runserver
+<b>Start project</b><br>
+<code>python manage.py runserver</code>
